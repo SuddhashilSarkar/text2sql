@@ -15,7 +15,7 @@ Ensure you have the following installed before running the setup script:
 
 1. **Clone the Repository**
    ```sh
-   git clone <your-repo-url>
+   git clone https://github.com/SuddhashilSarkar/text2sql.git
    cd text2sql
    ```
 
