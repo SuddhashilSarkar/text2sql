@@ -50,15 +50,8 @@ Ensure you have the following installed before running the setup script:
    ```sh
    deactivate
    ```
+   
 
-## Troubleshooting
-
-- If `python setup.py` fails, ensure you have Python 3.7+ installed and added to your system `PATH`.
-- If virtual environment activation fails on Windows PowerShell, try running:
-  ```sh
-  Set-ExecutionPolicy Unrestricted -Scope Process
-  ```
-  Then attempt to activate `venv` again.
 
 ## Contributing
 
