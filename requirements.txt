@@ -1,3 +1,4 @@
 factory_boy
 faker
 phonenumbers
+pyyaml
