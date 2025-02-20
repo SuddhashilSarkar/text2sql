@@ -1,100 +1,51 @@
 users:
-  create_statement: "CREATE TABLE users (\n            id INTEGER PRIMARY KEY,\n \
-    \           name TEXT NOT NULL\n        )"
   columns:
-  - cid: 0
-    name: id
+  - name: id
     type: INTEGER
-    notnull: false
-    default: null
-    primary_key: true
-  - cid: 1
-    name: name
+    constraints:
+    - PRIMARY KEY
+  - name: name
     type: TEXT
-    notnull: true
-    default: null
-    primary_key: false
-sqlite_sequence:
-  create_statement: CREATE TABLE sqlite_sequence(name,seq)
-  columns:
-  - cid: 0
-    name: name
-    type: ''
-    notnull: false
-    default: null
-    primary_key: false
-  - cid: 1
-    name: seq
-    type: ''
-    notnull: false
-    default: null
-    primary_key: false
+    constraints:
+    - NOT NULL
 students:
-  create_statement: "CREATE TABLE students (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n\
-    \    name TEXT NOT NULL,\n    age INTEGER CHECK(age BETWEEN 5 AND 30),\n    gender\
-    \ TEXT CHECK(gender IN ('Male', 'Female', 'Other')),\n    grade TEXT NOT NULL,\n\
-    \    email TEXT UNIQUE NOT NULL,\n    phone TEXT UNIQUE NOT NULL CHECK(length(phone)\
-    \ BETWEEN 10 AND 15),\n    address TEXT NOT NULL,\n    cgpa REAL CHECK(cgpa BETWEEN\
-    \ 0.0 AND 10.0),\n    enrollment_year INTEGER CHECK(enrollment_year BETWEEN 2010\
-    \ AND 2025)\n)"
   columns:
-  - cid: 0
-    name: id
+  - name: id
     type: INTEGER
-    notnull: false
-    default: null
-    primary_key: true
-  - cid: 1
-    name: name
+    constraints:
+    - PRIMARY KEY
+    - AUTOINCREMENT
+  - name: name
     type: TEXT
-    notnull: true
-    default: null
-    primary_key: false
-  - cid: 2
-    name: age
+    constraints:
+    - NOT NULL
+  - name: age
     type: INTEGER
-    notnull: false
-    default: null
-    primary_key: false
-  - cid: 3
-    name: gender
+    constraints: []
+  - name: gender
     type: TEXT
-    notnull: false
-    default: null
-    primary_key: false
-  - cid: 4
-    name: grade
+    constraints: []
+  - name: grade
     type: TEXT
-    notnull: true
-    default: null
-    primary_key: false
-  - cid: 5
-    name: email
+    constraints:
+    - NOT NULL
+  - name: email
     type: TEXT
-    notnull: true
-    default: null
-    primary_key: false
-  - cid: 6
-    name: phone
+    constraints:
+    - NOT NULL
+    - UNIQUE
+  - name: phone
     type: TEXT
-    notnull: true
-    default: null
-    primary_key: false
-  - cid: 7
-    name: address
+    constraints:
+    - NOT NULL
+    - UNIQUE
+  - name: address
     type: TEXT
-    notnull: true
-    default: null
-    primary_key: false
-  - cid: 8
-    name: cgpa
+    constraints:
+    - NOT NULL
+  - name: cgpa
     type: REAL
-    notnull: false
-    default: null
-    primary_key: false
-  - cid: 9
-    name: enrollment_year
+    constraints: []
+  - name: enrollment_year
     type: INTEGER
-    notnull: false
-    default: null
-    primary_key: false
+    constraints: []
