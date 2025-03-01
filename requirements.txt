@@ -1,4 +1,7 @@
 factory_boy
 faker
+pandas
 phonenumbers
 pyyaml
+google-genai
+streamlit
