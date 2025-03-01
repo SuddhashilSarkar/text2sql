@@ -97,7 +97,7 @@ def get_table_schema(cursor, table):
     
     return {"columns": columns}
 
-def get_optimized_schema(db_path):
+def get_schema(db_path):
     """
     Connects to the SQLite database, extracts the schema for all user-defined tables
     (excluding system tables), and returns a dictionary suitable for YAML output.
@@ -118,7 +118,9 @@ def get_optimized_schema(db_path):
 
 if __name__ == '__main__':
     db_path = "mydb.db"
-    schema_data = get_optimized_schema(db_path)
+    schema_data = get_schema(db_path)
+
+
     
     # Write the optimized schema to schema.yaml.
     with open("schema.yaml", "w") as yaml_file:
