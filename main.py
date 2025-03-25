@@ -1,8 +1,9 @@
 import streamlit as st
 import sqlite3
 import pandas as pd
-from ai_engine import load_schema, generate_sql_and_chart_params, parse_llm_response  # Updated imports
-from chart_engine import ChartEngine  # New import
+import json
+from ai_engine import load_schema, generate_sql_and_chart_params, parse_llm_response
+from chart_engine import ChartEngine
 
 # Configure the Streamlit page layout
 st.set_page_config(page_title="Text2SQL with Charts", layout="wide")
@@ -29,6 +30,10 @@ if st.button("Generate & Execute"):
                 schema = load_schema("schema.yaml")
                 llm_response = generate_sql_and_chart_params(user_input, schema)
                 sql, chart_params = parse_llm_response(llm_response)
+                
+                # Display LLM output in expandable section
+                with st.expander("See complete LLM output", expanded=False):
+                    st.json(llm_response)  # Display raw LLM response as JSON
                 
                 # Display generated SQL
                 st.success("Generated SQL Query:")

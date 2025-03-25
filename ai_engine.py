@@ -26,13 +26,13 @@ def generate_sql_and_chart_params(user_input, schema):
 ### Instructions:
 - Use only tables/columns from the schema
 - For chart parameters:
-  - Default to bar chart if unspecified
+  - Default to bar chart if unspecified, but do send the chart_type along with the output. Available chart names:["bar", "line", "pie"].
   - Identify x-axis (categorical) and y-axis (numerical) columns
   - Use column aliases from the SELECT clause
 - Output format:
 {{
   "query": "SELECT...",
-  "chart_type": "bar|line|pie",
+  "chart_type": "chart_name",
   "x_column": "column_name",
   "y_column": "column_name"
 }}""")
