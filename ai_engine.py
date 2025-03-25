@@ -1,4 +1,5 @@
 import os
+import json
 import yaml
 from google import genai
 from google.genai import types
@@ -8,29 +9,33 @@ def load_schema(schema_path="schema.yaml"):
     with open(schema_path, "r") as file:
         return yaml.safe_load(file)
 
-def generate_sql_query(user_input, schema):
-    """Generates an SQL query using Gemini based on user input and schema."""
+def generate_sql_and_chart_params(user_input, schema):
+    """Generates SQL query and chart parameters using Gemini."""
     client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
     model = "gemini-2.0-flash"
 
-    schema_text = yaml.dump(schema, default_flow_style=False)  # Convert schema to YAML string
+    schema_text = yaml.dump(schema, default_flow_style=False)
 
-    system_instructions = types.Part.from_text(text=f"""You are an expert SQL generator. Your task is to generate a valid SQLite SQL query based on the given database schema and user request. Ensure the query adheres to SQLite syntax.
+    system_instructions = types.Part.from_text(text=f"""You are an expert SQL generator. Your task is to:
+1. Generate a valid SQLite SQL query based on the schema and user request
+2. Suggest chart parameters for visualizing the results
 
 ### Database Schema:
 {schema_text}
 
 ### Instructions:
-- Use only the tables and columns provided in the schema.
-- Ensure that all constraints (e.g., NOT NULL, UNIQUE, PRIMARY KEY) are respected.
-- Use proper WHERE conditions for filtering data based on user input.
-- Do not include table names or columns that are not present in the schema.
-- If a column has a UNIQUE constraint (e.g., email, phone), use it to filter queries when applicable.
-- If a request is ambiguous, make an educated assumption based on common use cases.
-
-### Output:
-Provide only the SQL query in JSON format.
-""")
+- Use only tables/columns from the schema
+- For chart parameters:
+  - Default to bar chart if unspecified
+  - Identify x-axis (categorical) and y-axis (numerical) columns
+  - Use column aliases from the SELECT clause
+- Output format:
+{{
+  "query": "SELECT...",
+  "chart_type": "bar|line|pie",
+  "x_column": "column_name",
+  "y_column": "column_name"
+}}""")
 
     contents = [
         types.Content(role="user", parts=[types.Part.from_text(text=user_input)]),
@@ -46,7 +51,9 @@ Provide only the SQL query in JSON format.
             type=genai.types.Type.OBJECT,
             properties={
                 "query": genai.types.Schema(type=genai.types.Type.STRING),
-                "response": genai.types.Schema(type=genai.types.Type.STRING),
+                "chart_type": genai.types.Schema(type=genai.types.Type.STRING),
+                "x_column": genai.types.Schema(type=genai.types.Type.STRING),
+                "y_column": genai.types.Schema(type=genai.types.Type.STRING)
             },
         ),
         system_instruction=[system_instructions],
@@ -56,10 +63,32 @@ Provide only the SQL query in JSON format.
         model=model, contents=contents, config=generate_content_config
     )
 
-    return response.text  # Returning generated SQL query in JSON format
+    try:
+        return json.loads(response.text)
+    except json.JSONDecodeError:
+        return {
+            "query": "SELECT * FROM table",
+            "chart_type": "bar",
+            "x_column": "column1",
+            "y_column": "column2"
+        }
+
+def parse_llm_response(response: dict) -> tuple:
+    """Extracts SQL and chart parameters from LLM response."""
+    return (
+        response.get("query", "SELECT * FROM table"),
+        {
+            "chart_type": response.get("chart_type", "bar"),
+            "x": response.get("x_column", "column1"),
+            "y": response.get("y_column", "column2")
+        }
+    )
 
 if __name__ == "__main__":
-    schema = load_schema("schema.yaml")  # Load schema from file
-    user_query = input("Enter your query: ")  # User input
-    sql_query = generate_sql_query(user_query, schema)
-    print("\nGenerated SQL Query:\n", sql_query)
+    schema = load_schema("schema.yaml")
+    user_query = input("Enter your query: ")
+    response = generate_sql_and_chart_params(user_query, schema)
+    sql, chart_params = parse_llm_response(response)
+    
+    print("\nGenerated SQL:\n", sql)
+    print("\nChart Parameters:\n", chart_params)
