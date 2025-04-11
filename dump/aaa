@@ -1,0 +1,133 @@
+from soe import extract_sqlite_schema, parse_sql_schema, process_query, format_as_markdown
+from pr_engine import ProtocolClassifier
+from ai_engine import generate_sql_query, generate_sql_chart
+import sqlite3
+import pandas as pd
+from chart_engine import ChartEngine
+
+def execute_sql(db_path, query):
+    try:
+        conn = sqlite3.connect(db_path)
+        if query.strip().lower().startswith("select"):
+            df = pd.read_sql_query(query, conn)
+            conn.close()
+            return df
+        else:
+            cursor = conn.cursor()
+            cursor.execute(query)
+            conn.commit()
+            conn.close()
+            return f"Query executed successfully (non-SELECT)."
+    except sqlite3.Error as e:
+        return f"SQLite error: {e}"
+
+
+def handle_protocol(protocol: str, original_query: str, improved_query: str, db_path: str):
+    """
+    Routes the query based on protocol type.
+
+    Assumptions:
+      - The following external functions are already defined elsewhere in your project:
+          extract_sqlite_schema(db_path)
+          parse_sql_schema(sql_text)
+          process_query(query, schema, ...)
+          format_as_markdown(data, result_type)
+          call_llm(prompt)
+          execute_sql(db_path, sql_query)
+          call_ui(result)
+          call_chart_engine(result)
+    """
+    # Retrieve the full list of CREATE TABLE statements (raw schema)
+    create_statements = extract_sqlite_schema(db_path)
+    if not create_statements:
+        print("Error: Unable to extract schema from the database.")
+        return
+
+    # Parse schema into a structured dictionary
+    schema = parse_sql_schema(create_statements)
+
+    # --- Protocol Workflows ---
+    if protocol in ["10", "11"]:
+        # Protocol 10: Simple Query
+        query_results = process_query(improved_query, schema)
+        md_schema = format_as_markdown(query_results, result_type="results")
+        sql_query = generate_sql_query(improved_query, md_schema)
+        sql_result = execute_sql(db_path, sql_query["sql_query"])
+        call_ui(sql_result)
+
+    elif protocol in ["12", "13"]:
+        # Protocol 12 & 13: Chart generation (Static Chart / Dynamic Chart)
+        query_results = process_query(improved_query, schema)
+        md_schema = format_as_markdown(query_results, result_type="results")
+        sql_query = generate_sql_chart(improved_query, md_schema)
+        sql_result = execute_sql(db_path, sql_query["sql_query"])
+        chrt = ChartEngine.generate_chart(sql_result, chart_type=sql_query["chart_type"])
+
+    elif protocol == "21":
+        # Protocol 21: Insert Data — use full formatted schema.
+        full_md_schema = format_as_markdown(schema, result_type="schema")
+        sql_query = generate_sql_query(improved_query,full_md_schema)
+        sql_result = execute_sql(db_path, sql_query)
+        if "error" not in str(sql_result).lower():
+            call_ui("Successfully inserted")
+        else:
+            call_ui(f"Insertion error: {sql_result}")
+
+    elif protocol in ["22", "23"]:
+        # Protocol 22 & 23: Update or Delete Data — use optimized schema.
+        optimized_schema = process_query(improved_query, schema)
+        md_schema = format_as_markdown(optimized_schema, result_type="results")
+        sql_query = generate_sql_query(improved_query,md_schema)
+        sql_result = execute_sql(db_path, sql_query["sql_query"])
+        if "error" not in str(sql_result).lower():
+            call_ui("Operation successful")
+        else:
+            call_ui(f"Operation error: {sql_result}")
+
+    elif protocol in ["30", "31", "32", "33", "34"]:
+        # Protocol 30s: Data Definition (DDL)
+        # For most DDL protocols, send only the table names unless it's 32 (Alter Table).
+        table_names = list(schema.keys())
+        tables_md = "\n".join([f"- {table}" for table in table_names])
+        p = tables_md
+        if protocol == "32":
+            optimized_schema = process_query(improved_query, schema)
+            md_schema = format_as_markdown(optimized_schema, result_type="results")
+            p = md_schema
+        sql_query = generate_sql_query(improved_query,p)
+        sql_result = execute_sql(db_path, sql_query["sql_query"])
+        call_ui(sql_result)
+
+    elif protocol.startswith("40"):
+        # Protocol 40s: Metadata operations.
+        if protocol == "41":
+            # List available tables.
+            table_names = list(schema.keys())
+            result = "\n".join([f"- {table}" for table in table_names])
+            call_ui("Tables:\n" + result)
+        elif protocol == "42":
+            # Describe table: Here, the improved_query should contain the table name.
+            table = improved_query.strip()
+            if table in schema:
+                md_schema = format_as_markdown({table: schema[table]}, result_type="schema")
+                call_ui(md_schema)
+            else:
+                call_ui(f"Table '{table}' not found")
+        elif protocol == "40":
+            # Display full schema as metadata.
+            full_md_schema = format_as_markdown(schema, result_type="schema")
+            call_ui(full_md_schema)
+    else:
+        call_ui("Unsupported protocol code.")
+
+# -------------------------------------------------
+# Example Invocation
+# -------------------------------------------------
+if __name__ == "__main__":
+    # These variables should be replaced or set dynamically as needed.
+    protocol = "10"                   # e.g., "10", "12", "21", "32", etc.
+    original_query = "find all customers"
+    improved_query = "Retrieve all customer records"
+    db_path = "my_database.db"         # Path to your SQLite database file
+
+    handle_protocol(protocol, original_query, improved_query, db_path)

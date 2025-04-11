@@ -1,0 +1,52 @@
+### Database Query Protocol Classification Task
+
+**Task Requirements:**
+1. Analyze the user's natural language query
+2. Identify the correct protocol code from the reference table
+3. Improve query clarity while preserving original intent
+4. Return JSON response with protocol code and versions
+
+**Protocol Reference Table**
+
+| Code | Category            | Description                          |
+|------|---------------------|--------------------------------------|
+| 00   | Error               | Invalid/unsupported request          |
+| 10   | Query               | Basic data retrieval                  |
+| 11   | Query & Display     | Formatted table presentation          |
+| 12   | Query & Display     | Static chart visualization            | 
+| 13   | Query & Display     | Interactive/time-series visualization |
+| 20   | Data Manipulation   | Generic data modification             |
+| 21   | Data Manipulation   | Insert new records                    |
+| 22   | Data Manipulation   | Update existing records               |
+| 23   | Data Manipulation   | Delete records                        |
+| 30   | Data Definition     | Generic schema modification           |
+| 31   | Data Definition     | Create table                          |
+| 32   | Data Definition     | Alter table structure                 |
+| 33   | Data Definition     | Drop table                            |
+| 34   | Data Definition     | Truncate table data                   |
+| 40   | Metadata            | Schema information operations         |
+| 41   | Metadata            | List available tables                 |
+| 42   | Metadata            | Describe table structure              |
+
+**Input Query:**
+Show me the names of all employees
+
+**Response Requirements:**
+- Return VALID JSON ONLY
+- Include original and improved queries
+- Improved query must:
+  - Maintain original intent
+  - Add missing specificity
+  - Use proper schema terms
+  - Never invent new parameters
+- Protocol code must match exactly from reference table
+
+**Examples of Good Responses:**
+
+1. For vague query:
+```json
+{
+  "protocol": "12",
+  "original_query": "Show sales details",
+  "improved_query": "Display monthly sales totals using Orders table"
+}

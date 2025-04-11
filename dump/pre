@@ -1,0 +1,115 @@
+# protocol_recognizer.py
+import json
+import logging
+import re
+import requests
+from typing import Dict, Any
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class ProtocolClassifier:
+    def __init__(self, config_path: str = "config/protocols.json"):
+        self.protocol_config = self._load_protocol_config(config_path)
+        self.ollama_model = "gemma3:4b"  # Updated to Gemma 3
+        self.protocol_table = self._generate_protocol_table()
+        
+    def _load_protocol_config(self, config_path: str) -> Dict[str, Any]:
+        try:
+            with open(config_path, 'r') as f:
+                return json.load(f)
+        except Exception as e:
+            logger.error(f"Error loading config: {e}")
+            raise
+
+    def _generate_protocol_table(self) -> str:
+        """Generate markdown-style protocol table for prompts"""
+        table = "| Code | Category | Description |\n|------|----------|-------------|\n"
+        for code, details in self.protocol_config.items():
+            table += f"| {code} | {details['category']} | {details['description']} |\n"
+        return table
+
+    def _build_prompt(self, query: str) -> str:
+        return f"""You are a database protocol classifier. Analyze this query and:
+
+1. Identify the correct protocol code
+2. Improve the query for clarity
+3. Return JSON response
+
+**Available Protocols:**
+{self.protocol_table}
+
+**Original Query:**
+{query}
+
+**Response Requirements:**
+- Use valid JSON format
+- Include protocol code, original_query, and improved_query
+- Improved query should maintain original intent while adding specificity
+- Never invent parameters that weren't in the original query
+
+**Examples:**
+{{
+  "protocol": "12",
+  "original_query": "Show sales picture",
+  "improved_query": "Display monthly sales trends as a bar chart"
+}}
+"""
+
+    def _llm_classify(self, query: str) -> Dict[str, str]:
+        """Get structured response from Gemma 3"""
+        prompt = self._build_prompt(query)
+        
+        try:
+            response = requests.post(
+                "http://localhost:11434/api/generate",
+                json={
+                    "model": self.ollama_model,
+                    "prompt": prompt,
+                    "format": "json",
+                    "stream": False,
+                    "options": {
+                        "temperature": 0.3,
+                        "stop": ["\n```"],
+                        "num_ctx": 4096
+                    }
+                }
+            )
+            response.raise_for_status()
+            
+            # Clean and parse JSON response
+            raw_text = response.json()["response"].strip()
+            json_str = re.search(r"\{.*\}", raw_text, re.DOTALL).group()
+            return json.loads(json_str)
+            
+        except Exception as e:
+            logger.error(f"LLM classification failed: {e}")
+            return {
+                "protocol": "00",
+                "original_query": query,
+                "improved_query": query
+            }
+
+    def classify(self, query: str) -> Dict[str, Any]:
+        """
+        Returns:
+            {
+                "protocol": "12",
+                "original_query": "show sales pic",
+                "improved_query": "Display monthly sales trends as bar chart",
+                "metadata": { ... }
+            }
+        """
+        llm_response = self._llm_classify(query)
+        
+        # Validate protocol code
+        protocol_code = llm_response.get("protocol", "00")
+        if protocol_code not in self.protocol_config:
+            protocol_code = "00"
+            
+        return {
+            "protocol": protocol_code,
+            "original_query": llm_response.get("original_query", query),
+            "improved_query": llm_response.get("improved_query", query),
+            "metadata": self.protocol_config.get(protocol_code, {})
+        }

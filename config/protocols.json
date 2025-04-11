@@ -1,0 +1,70 @@
+{
+    "00": {
+        "category": "Error",
+        "description": "Invalid or unsupported request or Unable to process intent."
+    },
+    "10": {
+        "category": "Query",
+        "description": "Basic data retrieval"
+    },
+    "11": {
+        "category": "Query & Display",
+        "description": "Formatted tabular presentation"
+    },
+    "12": {
+        "category": "Query & Display",
+        "description": "Predefined charts (bar, line, pie, scatter)"
+    },
+    "13": {
+        "category": "Query & Display",
+        "description": "Time-series visualizations"
+    },
+    "20": {
+        "category": "Data Manipulation",
+        "description": "Generic data modification"
+    },
+    "21": {
+        "category": "Data Manipulation",
+        "description": "Add new records with parameters"
+    },
+    "22": {
+        "category": "Data Manipulation",
+        "description": "Modify records with conditions"
+    },
+    "23": {
+        "category": "Data Manipulation",
+        "description": "Remove records based on conditions"
+    },
+    "30": {
+        "category": "Data Definition",
+        "description": "Generic schema modification"
+    },
+    "31": {
+        "category": "Data Definition",
+        "description": "Schema creation"
+    },
+    "32": {
+        "category": "Data Definition",
+        "description": "Schema modification"
+    },
+    "33": {
+        "category": "Data Definition",
+        "description": "Schema removal"
+    },
+    "34": {
+        "category": "Data Definition",
+        "description": "Data purging while preserving structure"
+    },
+    "40": {
+        "category": "Metadata",
+        "description": "Schema information operations"
+    },
+    "41": {
+        "category": "Metadata",
+        "description": "Retrieve available tables"
+    },
+    "42": {
+        "category": "Metadata",
+        "description": "Retrieve table structure details"
+    }
+}
